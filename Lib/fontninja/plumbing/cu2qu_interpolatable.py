@@ -51,4 +51,4 @@ class Cu2QuInterpolatable:
             ["ufo-cu2qu", "--output"] + args.output + ["--"] + args.input, check=True
         )
 
-    run = run_rust
+    run = run_python
