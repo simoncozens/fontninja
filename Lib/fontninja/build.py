@@ -78,6 +78,11 @@ def build_variable_ttf(c, ds, ttfs):
 
 
 def run(parser):
+    parser.add_argument(
+        "--build-dir",
+        metavar="DIRECTORY",
+        help="Build directory for intermediate outputs",
+    )
     inputGroup = parser.add_argument_group(
         title="Input arguments (flags)",
         description="The following arguments are mutually exclusive (pick only one):",
@@ -113,7 +118,10 @@ def run(parser):
     do_variable = "variable" in args.output
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        temp_dir = Path(tmpdirname)
+        if args.build_dir:
+            temp_dir = Path(args.build_dir)
+        else:
+            temp_dir = Path(tmpdirname)
         c = CommandRunner(temp_dir)
         if args.mm_designspace:
             designspace_path = args.mm_designspace
