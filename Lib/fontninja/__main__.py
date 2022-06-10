@@ -5,7 +5,7 @@ import sys
 
 parser = argparse.ArgumentParser(description='Font builder')
 
-if sys.argv[1] == "--plumbing":
+if len(sys.argv) > 0 and sys.argv[1] == "--plumbing":
 	del sys.argv[1]
 	fontninja.plumbing.run(parser)
 else:
