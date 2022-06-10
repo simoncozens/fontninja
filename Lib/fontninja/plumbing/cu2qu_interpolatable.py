@@ -1,5 +1,6 @@
 class Cu2QuInterpolatable:
     """Convert curves from cubic to quadratic across multiple UFOs at once"""
+
     ninja_args = "$args --output $out -- $in"
 
     @classmethod
@@ -20,11 +21,13 @@ class Cu2QuInterpolatable:
             "--max-err-em", help="Maximum error in fractions of the em square"
         )
 
-        parser.add_argument("--output", metavar="OUTPUT", help="Output UFO files", nargs="+")
+        parser.add_argument(
+            "--output", metavar="OUTPUT", help="Output UFO files", nargs="+"
+        )
         parser.add_argument("input", metavar="INPUT", help="Input UFO files", nargs="+")
 
     @classmethod
-    def run(cls, args):
+    def run_python(cls, args):
         from cu2qu.ufo import fonts_to_quadratic
         import ufoLib2
 
@@ -39,3 +42,13 @@ class Cu2QuInterpolatable:
         )
         for outfile, ufo in zip(args.output, ufos):
             ufo.save(outfile)
+
+    @classmethod
+    def run_rust(cls, args):
+        import subprocess
+
+        subprocess.run(
+            ["ufo-cu2qu", "--output"] + args.output + ["--"] + args.input, check=True
+        )
+
+    run = run_rust
