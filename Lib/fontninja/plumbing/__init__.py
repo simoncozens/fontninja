@@ -1,14 +1,16 @@
 from .cu2qu import Cu2Qu
+from .cu2qu_interpolatable import Cu2QuInterpolatable
 from .writefeatures import WriteFeatures
 from .compilefeatures import CompileFeatures
 from .decomposemixed import DecomposeMixed
 from .ufo2ttf import Ufo2Ttf
 
 commands = {
-	"compilefeatures": CompileFeatures,
+	"compile-features": CompileFeatures,
 	"writefeatures": WriteFeatures,
 	"decompose-mixed": DecomposeMixed,
 	"cu2qu": Cu2Qu,
+	"cu2qu-interpolatable": Cu2QuInterpolatable,
 	"ufo2ttf": Ufo2Ttf
 }
 
@@ -24,7 +26,11 @@ def run(parser):
 
 def setup_ninja_rules(writer):
 	writer.comment("Rules\n")
+	call_self = f"python3 -m fontninja --plumbing"
 	for command, impl in commands.items():
 		writer.comment(impl.__doc__)
-		writer.rule(command, f"python3 -m fontninja --plumbing {command} $args $in $out")
+		if hasattr(impl, "ninja_args"):
+			writer.rule(command, f"{call_self} {command} {impl.ninja_args}")
+		else:
+			writer.rule(command, f"{call_self} {command} $args $in $out")
 		writer.newline()

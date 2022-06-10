@@ -1,8 +1,66 @@
 import ninja
 from ninja.ninja_syntax import Writer
-from fontninja.plumbing import setup_ninja_rules
+from fontninja.plumbing import setup_ninja_rules, commands
 import tempfile
 from pathlib import Path
+
+
+class CommandRunner:
+    def __init__(self, build_dir):
+        self.writer = Writer(open("build.ninja", "w"))
+        self.build_dir = build_dir
+        setup_ninja_rules(self.writer)
+
+    def run(self):
+        self.writer.close()
+        ninja._program("ninja", [])
+
+    def outfile(self, infile, extension):
+        return str(self.build_dir / (Path(infile).stem + extension))
+
+    def __getattr__(self, command):
+        command = command.replace("_", "-")
+
+        def _runit(inputs, outputs, args=None):
+            if not isinstance(inputs, list):
+                inputs = [inputs]
+            if command not in commands:
+                raise ValueError(f"Unknown command {command}")
+            self.writer.comment(commands[command].__doc__)
+            self.writer.build(outputs, command, inputs)
+            return outputs
+
+        return _runit
+
+
+def build_ttf(c, ufo_paths):
+    for ufo in ufo_paths:
+        final_ttf = Path(ufo).stem + ".ttf"
+
+        feature_file = c.writefeatures(ufo, c.outfile(ufo, ".fea"))
+        decomposed = c.decompose_mixed(ufo, c.outfile(ufo, ".decomposed.ufo"))
+        # Flatten components
+        # Remove overlaps
+        cu2qu = c.cu2qu(decomposed, c.outfile(ufo, ".cu2qu.ufo"))
+        base_ttf = c.ufo2ttf(cu2qu, c.outfile(ufo, ".base.ttf"))
+        c.compile_features([base_ttf, feature_file], final_ttf)
+
+
+def build_ttf_interpolatable(c, ufo_paths):
+    decomposed = [c.outfile(ufo, ".decomposed.ufo") for ufo in ufo_paths]
+    cu2qus = [c.outfile(ufo, ".cu2qu.ufo") for ufo in ufo_paths]
+    c.cu2qu_interpolatable(decomposed, cu2qus)
+
+    for ufo in ufo_paths:
+        final_ttf = Path(ufo).stem + ".ttf"
+
+        feature_file = c.writefeatures(ufo, c.outfile(ufo, ".fea"))
+        decomposed = c.decompose_mixed(ufo, c.outfile(ufo, ".decomposed.ufo"))
+        # Flatten components
+        # Remove overlaps
+        cu2qu = c.outfile(ufo, ".cu2qu.ufo")
+        base_ttf = c.ufo2ttf(cu2qu, c.outfile(ufo, ".base.ttf"))
+        c.compile_features([base_ttf, feature_file], final_ttf)
 
 
 def run(parser):
@@ -27,7 +85,7 @@ def run(parser):
         metavar="FORMAT",
         help="Output font formats. Choose 1 or more from: %(choices)s. Default: otf, ttf. "
         "(No file paths).",
-        choices=("ttf",),
+        choices=("ttf", "ttf-interpolatable"),
     )
 
     # TTF
@@ -35,39 +93,10 @@ def run(parser):
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as tmpdirname:
         temp_dir = Path(tmpdirname)
-        w = Writer(open("build.ninja", "w"))
-        setup_ninja_rules(w)
+        c = CommandRunner(temp_dir)
+        if "ttf" in args.output:
+            build_ttf(c, args.ufo_paths)
+        elif "ttf-interpolatable" in args.output:
+            build_ttf_interpolatable(c, args.ufo_paths)
 
-        for ufo in args.ufo_paths:
-            ufo = Path(ufo)
-
-            w.comment("Make a full feature file")
-            feature_file = temp_dir / (ufo.stem + ".fea")
-            w.build(str(feature_file), "writefeatures", str(ufo))
-
-            w.comment("Decompose mixed glyphs")
-            decomposed = temp_dir / (ufo.stem + ".decomposed.ufo")
-            w.build(str(decomposed), "decompose-mixed", str(ufo))
-
-            # Flatten components
-            # Remove overlaps
-
-            w.comment("Convert cubic to quadratic")
-            cu2qu = temp_dir / (ufo.stem + ".cu2qu.ufo")
-            w.build(str(cu2qu), "cu2qu", str(decomposed))
-
-            w.comment("Compile base TTF")
-            basettf = temp_dir / (ufo.stem + ".base.ttf")
-            w.build(str(basettf), "ufo2ttf", str(cu2qu))
-
-            w.comment("Compile final TTF")
-            final_ttf = ufo.stem + ".ttf"
-            w.build(
-                str(final_ttf), "compilefeatures", [str(basettf), str(feature_file)]
-            )
-            w.default(str(final_ttf))
-
-            # Process glyph names
-
-        w.close()
-        ninja._program("ninja", [])
+        c.run()
