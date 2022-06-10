@@ -27,7 +27,7 @@ class Cu2QuInterpolatable:
         parser.add_argument("input", metavar="INPUT", help="Input UFO files", nargs="+")
 
     @classmethod
-    def run_python(cls, args):
+    def run(cls, args):
         from cu2qu.ufo import fonts_to_quadratic
         import ufoLib2
 
@@ -41,14 +41,6 @@ class Cu2QuInterpolatable:
             remember_curve_type=args.remember_curve_type,
         )
         for outfile, ufo in zip(args.output, ufos):
-            ufo.save(outfile)
+            ufo.save(outfile, overwrite=True)
 
-    @classmethod
-    def run_rust(cls, args):
-        import subprocess
-
-        subprocess.run(
-            ["ufo-cu2qu", "--output"] + args.output + ["--"] + args.input, check=True
-        )
-
-    run = run_python
+    ninja_rule_rust = "ufo-cu2qu $args --output $out -- $in"

@@ -11,7 +11,7 @@ class DecomposeMixed:
         parser.add_argument("output", metavar="OUTPUT", help="Output UFO file")
 
     @classmethod
-    def run_python(cls, args):
+    def run(cls, args):
         from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
         import ufoLib2
         from ufo2ft.util import _GlyphSet
@@ -20,13 +20,6 @@ class DecomposeMixed:
         filter = DecomposeComponentsFilter(include=lambda g: len(g))
         glyphSet = _GlyphSet.from_layer(ufo, args.layer, copy=False)
         filter(ufo, glyphSet)
-        ufo.save(args.output)
+        ufo.save(args.output, overwrite=True)
 
-
-    @classmethod
-    def run_rust(cls, args):
-        import subprocess
-
-        subprocess.run(["ufo-decompose", args.input, args.output], check=True)
-
-    run = run_python
+    ninja_rule_rust = "ufo-decompose $in $out"

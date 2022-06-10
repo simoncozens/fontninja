@@ -26,12 +26,14 @@ def run(parser):
 	args = parser.parse_args()
 	args.func(args)
 
-def setup_ninja_rules(writer):
+def setup_ninja_rules(writer, rust=False):
 	writer.comment("Rules\n")
 	call_self = f"python3 -m fontninja --plumbing"
 	for command, impl in commands.items():
 		writer.comment(impl.__doc__)
-		if hasattr(impl, "ninja_args"):
+		if rust and hasattr(impl, "ninja_rule_rust"):
+			writer.rule(command, f"{impl.ninja_rule_rust}")
+		elif hasattr(impl, "ninja_args"):
 			writer.rule(command, f"{call_self} {command} {impl.ninja_args}")
 		else:
 			writer.rule(command, f"{call_self} {command} $args $in $out")

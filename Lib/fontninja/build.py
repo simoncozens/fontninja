@@ -7,10 +7,10 @@ from fontTools import designspaceLib
 
 
 class CommandRunner:
-    def __init__(self, build_dir):
+    def __init__(self, build_dir, rust=False):
         self.writer = Writer(open("build.ninja", "w"))
         self.build_dir = build_dir
-        setup_ninja_rules(self.writer)
+        setup_ninja_rules(self.writer, rust=rust)
 
     def run(self):
         self.writer.close()
@@ -79,6 +79,11 @@ def build_variable_ttf(c, ds, ttfs):
 
 def run(parser):
     parser.add_argument(
+        "--rust",
+        action="store_true",
+        help="Use Rust utilities where possible",
+    )
+    parser.add_argument(
         "--build-dir",
         metavar="DIRECTORY",
         help="Build directory for intermediate outputs",
@@ -122,7 +127,7 @@ def run(parser):
             temp_dir = Path(args.build_dir)
         else:
             temp_dir = Path(tmpdirname)
-        c = CommandRunner(temp_dir)
+        c = CommandRunner(temp_dir, rust=args.rust)
         if args.mm_designspace:
             designspace_path = args.mm_designspace
             designspace = designspaceLib.DesignSpaceDocument.fromfile(designspace_path)

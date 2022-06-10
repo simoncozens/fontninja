@@ -11,7 +11,7 @@ class Ufo2Ttf:
         parser.add_argument("output", metavar="OUTPUT", help="Output TTF file")
 
     @classmethod
-    def run_python(cls, args):
+    def run(cls, args):
         import ufoLib2
         from ufo2ft.util import _GlyphSet
         from ufo2ft import compileTTF_args, call_outline_compiler, init_kwargs
@@ -22,10 +22,4 @@ class Ufo2Ttf:
         otf = call_outline_compiler(ufo, glyphSet, **kwargs)
         otf.save(args.output)
 
-    @classmethod
-    def run_rust(cls, args):
-        import subprocess
-        
-        subprocess.run(["fonticulus", args.input, args.output], check=True)
-
-    run = run_python
+    ninja_rule_rust = "fonticulus $in $out"
