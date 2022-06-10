@@ -1,17 +1,19 @@
+from .compilefeatures import CompileFeatures
 from .cu2qu import Cu2Qu
 from .cu2qu_interpolatable import Cu2QuInterpolatable
-from .writefeatures import WriteFeatures
-from .compilefeatures import CompileFeatures
 from .decomposemixed import DecomposeMixed
 from .ufo2ttf import Ufo2Ttf
+from .varlibmerge import VarlibMerge
+from .writefeatures import WriteFeatures
 
 commands = {
 	"compile-features": CompileFeatures,
-	"writefeatures": WriteFeatures,
-	"decompose-mixed": DecomposeMixed,
 	"cu2qu": Cu2Qu,
 	"cu2qu-interpolatable": Cu2QuInterpolatable,
-	"ufo2ttf": Ufo2Ttf
+	"decompose-mixed": DecomposeMixed,
+	"ufo2ttf": Ufo2Ttf,
+	"varlib-merge": VarlibMerge,
+	"writefeatures": WriteFeatures,
 }
 
 def run(parser):
