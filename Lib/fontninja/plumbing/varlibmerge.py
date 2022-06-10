@@ -18,7 +18,6 @@ class VarlibMerge:
             args.ds,
             finder,
             # exclude=args.exclude,
-            # optimize=args.optimize
+            optimize=False
         )
         vf.save(args.output)
-
