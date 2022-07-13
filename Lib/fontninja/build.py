@@ -4,6 +4,7 @@ from fontninja.plumbing import setup_ninja_rules, commands
 import tempfile
 from pathlib import Path
 from fontTools import designspaceLib
+from fontmake.font_project import FontProject
 
 
 class CommandRunner:
@@ -94,6 +95,9 @@ def run(parser):
     )
     xInputGroup = inputGroup.add_mutually_exclusive_group()
     xInputGroup.add_argument(
+        "-g", "--glyphs-path", metavar="GLYPHS", help="Path to .glyphs source file"
+    )
+    xInputGroup.add_argument(
         "-u",
         "--ufo-paths",
         nargs="+",
@@ -119,8 +123,39 @@ def run(parser):
         choices=("ttf", "ttf-interpolatable", "variable"),
     )
 
+    positionalInputs = parser.add_argument_group(
+        title="Input arguments (positonal)",
+        description="Alternatively, guess source format from filename extension",
+    )
+    positionalInputs.add_argument(
+        "posargs",
+        nargs="*",
+        metavar="INPUTS",
+        help="Either one *.designspace or *.glyphs file, or one or more *.ufo",
+    )
     args = parser.parse_args()
     do_variable = "variable" in args.output
+
+    for filename in args.posargs:
+        if filename.endswith(".glyphs"):
+            if glyphs_path:
+                parser.error("Only one *.glyphs source file is allowed")
+            glyphs_path = filename
+        elif filename.endswith(".designspace"):
+            if args.mm_designspace:
+                parser.error("Only one *.designspace source file is allowed")
+            args.mm_designspace = filename
+        elif filename.endswith(".ufo"):
+            args.ufo_paths.append(filename)
+        else:
+            parser.error(f"Unknown input file extension: '{filename}'")
+
+    count = sum(bool(p) for p in (args.glyphs_path, args.ufo_paths, args.mm_designspace))
+    if count == 0:
+        parser.error("No input files specified")
+    elif count > 1:
+        parser.error(f"Expected 1, got {count} different types of inputs files")
+
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         if args.build_dir:
@@ -128,6 +163,8 @@ def run(parser):
         else:
             temp_dir = Path(tmpdirname)
         c = CommandRunner(temp_dir, rust=args.rust)
+        if args.glyphs_path:
+            args.mm_designspace = FontProject().build_master_ufos(args.glyphs_path)
         if args.mm_designspace:
             designspace_path = args.mm_designspace
             designspace = designspaceLib.DesignSpaceDocument.fromfile(designspace_path)
