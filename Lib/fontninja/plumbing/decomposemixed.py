@@ -16,10 +16,10 @@ class DecomposeMixed:
         import ufoLib2
         from ufo2ft.util import _GlyphSet
 
-        ufo = ufoLib2.Font.open(args.input)
+        ufo = ufoLib2.Font.open(args.input, validate=False)
         filter = DecomposeComponentsFilter(include=lambda g: len(g))
         glyphSet = _GlyphSet.from_layer(ufo, args.layer, copy=False)
         filter(ufo, glyphSet)
-        ufo.save(args.output, overwrite=True)
+        ufo.save(args.output, overwrite=True, validate=False)
 
     ninja_rule_rust = "ufo-decompose $in $out"

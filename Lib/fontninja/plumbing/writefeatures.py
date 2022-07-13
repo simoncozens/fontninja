@@ -11,7 +11,7 @@ class WriteFeatures:
         from ufo2ft.featureCompiler import FeatureCompiler
         import ufoLib2
 
-        ufo = ufoLib2.Font.open(args.input)
+        ufo = ufoLib2.Font.open(args.input, validate=False)
         fc = FeatureCompiler(ufo)
         fc.setupFeatures()
         fc.writeFeatures(open(args.output, "w"))

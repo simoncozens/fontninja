@@ -32,7 +32,7 @@ class Cu2QuInterpolatable:
         import ufoLib2
 
         assert len(args.input) == len(args.output)
-        ufos = [ufoLib2.Font.open(ufo) for ufo in args.input]
+        ufos = [ufoLib2.Font.open(ufo, validate=False) for ufo in args.input]
         fonts_to_quadratic(
             ufos,
             max_err_em=args.max_err_em,
