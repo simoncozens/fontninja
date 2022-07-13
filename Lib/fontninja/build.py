@@ -138,9 +138,9 @@ def run(parser):
 
     for filename in args.posargs:
         if filename.endswith(".glyphs"):
-            if glyphs_path:
+            if args.glyphs_path:
                 parser.error("Only one *.glyphs source file is allowed")
-            glyphs_path = filename
+            args.glyphs_path = filename
         elif filename.endswith(".designspace"):
             if args.mm_designspace:
                 parser.error("Only one *.designspace source file is allowed")
@@ -170,10 +170,10 @@ def run(parser):
             designspace = designspaceLib.DesignSpaceDocument.fromfile(designspace_path)
             args.ufo_paths = [source.path for source in designspace.sources]
 
-        if "ttf" in args.output:
-            build_ttf(c, args.ufo_paths)
-        elif "ttf-interpolatable" in args.output or do_variable:
+        if "ttf-interpolatable" in args.output or do_variable:
             ttfs = build_ttf_interpolatable(c, args.ufo_paths, output_dir=temp_dir)
             if do_variable:
                 build_variable_ttf(c, args.mm_designspace, ttfs)
+        elif "ttf" in args.output:
+            build_ttf(c, args.ufo_paths)
         c.run()
